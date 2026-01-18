@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Alpine.js cloak */
+[x-cloak] {
+    display: none !important;
+}
+
+/* Leaflet marker styles */
+.user-location-marker,
+.house-marker,
+.flyer-marker {
+    background: transparent;
+    border: none;
+}
