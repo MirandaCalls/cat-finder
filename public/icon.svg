@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="115" fill="url(#bg)"/>
+
+  <!-- Cat silhouette -->
+  <g fill="#ffffff">
+    <!-- Left ear -->
+    <path d="M 140 160 L 110 110 L 170 140 Z"/>
+    <!-- Right ear -->
+    <path d="M 280 160 L 310 110 L 250 140 Z"/>
+    <!-- Head -->
+    <circle cx="210" cy="200" r="80"/>
+    <!-- Body -->
+    <ellipse cx="210" cy="310" rx="70" ry="90"/>
+    <!-- Tail -->
+    <path d="M 270 330 Q 320 320 330 360 Q 335 380 320 390" stroke="#ffffff" stroke-width="20" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <!-- Magnifying glass -->
+  <g transform="translate(280, 280)">
+    <!-- Glass circle -->
+    <circle cx="0" cy="0" r="70" fill="none" stroke="#ffffff" stroke-width="16"/>
+    <circle cx="0" cy="0" r="60" fill="#ffffff" opacity="0.3"/>
+    <!-- Handle -->
+    <line x1="50" y1="50" x2="100" y2="100" stroke="#ffffff" stroke-width="20" stroke-linecap="round"/>
+  </g>
+</svg>
