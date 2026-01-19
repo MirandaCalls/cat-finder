@@ -164,47 +164,60 @@
 
         <!-- Legend -->
         <div class="fixed bottom-4 left-4 z-[999] bg-white rounded-lg shadow-lg p-3 text-sm">
-            <div class="font-medium mb-2">Legend</div>
-            <div class="space-y-1">
-                <div class="flex items-center gap-2">
-                    <span class="w-4 h-4 rounded-full bg-red-500"></span>
-                    <span>House - Not visited</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="w-4 h-4 rounded-full bg-yellow-500"></span>
-                    <span>House - Partial</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="w-4 h-4 rounded-full bg-green-500"></span>
-                    <span>House - Complete</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="w-4 h-4 rounded-full bg-purple-500"></span>
-                    <span>Flyer Location</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="w-4 h-4 rounded-full bg-blue-500 animate-pulse"></span>
-                    <span>You are here</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="w-4 h-4 rounded-full bg-orange-500"></span>
-                    <span>Other users</span>
-                </div>
+            <div class="flex items-center justify-between mb-2">
+                <div class="font-medium">Legend</div>
+                <button @click="legendCollapsed = !legendCollapsed"
+                        class="text-gray-500 hover:text-gray-700 p-1 -mr-1">
+                    <svg x-show="!legendCollapsed" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                    <svg x-show="legendCollapsed" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
             </div>
-            <!-- Active Users Count -->
-            <div x-show="activeUsers.length > 0" class="mt-2 pt-2 border-t border-gray-200 text-xs text-gray-600">
-                <span x-text="activeUsers.length"></span> other user<span x-show="activeUsers.length !== 1">s</span> active
-            </div>
-            <!-- Live Sync Status -->
-            <div class="mt-3 pt-3 border-t border-gray-200 flex items-center gap-2">
-                <span x-show="syncStatus === 'synced'" class="w-2 h-2 rounded-full bg-green-500"></span>
-                <span x-show="syncStatus === 'syncing'" class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
-                <span x-show="syncStatus === 'error'" class="w-2 h-2 rounded-full bg-red-500"></span>
-                <span class="text-xs text-gray-500">
-                    <span x-show="syncStatus === 'synced'">Live updates active</span>
-                    <span x-show="syncStatus === 'syncing'">Syncing...</span>
-                    <span x-show="syncStatus === 'error'">Connection error</span>
-                </span>
+            <div x-show="!legendCollapsed" x-collapse>
+                <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                        <span class="w-4 h-4 rounded-full bg-red-500"></span>
+                        <span>House - Not visited</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-4 h-4 rounded-full bg-yellow-500"></span>
+                        <span>House - Partial</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-4 h-4 rounded-full bg-green-500"></span>
+                        <span>House - Complete</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-4 h-4 rounded-full bg-purple-500"></span>
+                        <span>Flyer Location</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-4 h-4 rounded-full bg-blue-500 animate-pulse"></span>
+                        <span>You are here</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-4 h-4 rounded-full bg-orange-500"></span>
+                        <span>Other users</span>
+                    </div>
+                </div>
+                <!-- Active Users Count -->
+                <div x-show="activeUsers.length > 0" class="mt-2 pt-2 border-t border-gray-200 text-xs text-gray-600">
+                    <span x-text="activeUsers.length"></span> other user<span x-show="activeUsers.length !== 1">s</span> active
+                </div>
+                <!-- Live Sync Status -->
+                <div class="mt-3 pt-3 border-t border-gray-200 flex items-center gap-2">
+                    <span x-show="syncStatus === 'synced'" class="w-2 h-2 rounded-full bg-green-500"></span>
+                    <span x-show="syncStatus === 'syncing'" class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
+                    <span x-show="syncStatus === 'error'" class="w-2 h-2 rounded-full bg-red-500"></span>
+                    <span class="text-xs text-gray-500">
+                        <span x-show="syncStatus === 'synced'">Live updates active</span>
+                        <span x-show="syncStatus === 'syncing'">Syncing...</span>
+                        <span x-show="syncStatus === 'error'">Connection error</span>
+                    </span>
+                </div>
             </div>
         </div>
 
@@ -238,6 +251,7 @@
                 locationInterval: null,
                 lastSync: null,
                 syncStatus: 'syncing',
+                legendCollapsed: false,
                 newPin: {
                     type: 'house',
                     latitude: 0,
