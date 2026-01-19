@@ -10,7 +10,8 @@
 /* Leaflet marker styles */
 .user-location-marker,
 .house-marker,
-.flyer-marker {
+.flyer-marker,
+.other-user-marker {
     background: transparent;
     border: none;
 }

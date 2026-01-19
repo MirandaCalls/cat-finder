@@ -182,6 +182,25 @@
                     <span class="w-4 h-4 rounded-full bg-blue-500 animate-pulse"></span>
                     <span>You are here</span>
                 </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-4 h-4 rounded-full bg-orange-500"></span>
+                    <span>Other users</span>
+                </div>
+            </div>
+            <!-- Active Users Count -->
+            <div x-show="activeUsers.length > 0" class="mt-2 pt-2 border-t border-gray-200 text-xs text-gray-600">
+                <span x-text="activeUsers.length"></span> other user<span x-show="activeUsers.length !== 1">s</span> active
+            </div>
+            <!-- Live Sync Status -->
+            <div class="mt-3 pt-3 border-t border-gray-200 flex items-center gap-2">
+                <span x-show="syncStatus === 'synced'" class="w-2 h-2 rounded-full bg-green-500"></span>
+                <span x-show="syncStatus === 'syncing'" class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
+                <span x-show="syncStatus === 'error'" class="w-2 h-2 rounded-full bg-red-500"></span>
+                <span class="text-xs text-gray-500">
+                    <span x-show="syncStatus === 'synced'">Live updates active</span>
+                    <span x-show="syncStatus === 'syncing'">Syncing...</span>
+                    <span x-show="syncStatus === 'error'">Connection error</span>
+                </span>
             </div>
         </div>
 
@@ -205,9 +224,16 @@
                 houses: [],
                 flyerLocations: [],
                 markers: [],
+                activeUsers: [],
+                userMarkers: {},
+                locationSharingEnabled: false,
                 showAddModal: false,
                 showEditModal: false,
                 saving: false,
+                pollInterval: null,
+                locationInterval: null,
+                lastSync: null,
+                syncStatus: 'syncing',
                 newPin: {
                     type: 'house',
                     latitude: 0,
@@ -254,14 +280,185 @@
                     // Get user location
                     this.getUserLocation();
 
-                    // Load existing pins
+                    // Load existing pins and start live updates
                     this.loadPins();
+                    this.startPolling();
+
+                    // Clean up polling when page is hidden/closed
+                    document.addEventListener('visibilitychange', () => {
+                        if (document.hidden) {
+                            this.stopPolling();
+                            this.stopLocationSharing();
+                        } else {
+                            this.loadPins();
+                            this.loadActiveUsers();
+                            this.startPolling();
+                            if (this.userLocation) {
+                                this.startLocationSharing();
+                            }
+                        }
+                    });
+
+                    // Clear location when leaving/closing the page
+                    window.addEventListener('beforeunload', () => {
+                        this.clearLocationOnServer();
+                    });
+
+                    window.addEventListener('pagehide', () => {
+                        this.clearLocationOnServer();
+                    });
+                },
+
+                startPolling() {
+                    // Poll every 5 seconds for updates
+                    if (this.pollInterval) return;
+                    this.pollInterval = setInterval(() => {
+                        this.loadPins(true);
+                        this.loadActiveUsers();
+                    }, 5000);
+                },
+
+                stopPolling() {
+                    if (this.pollInterval) {
+                        clearInterval(this.pollInterval);
+                        this.pollInterval = null;
+                    }
+                },
+
+                startLocationSharing() {
+                    if (this.locationInterval || !this.userLocation) return;
+                    this.locationSharingEnabled = true;
+                    // Share location immediately
+                    this.shareLocationToServer();
+                    // Then every 5 seconds
+                    this.locationInterval = setInterval(() => {
+                        this.shareLocationToServer();
+                    }, 5000);
+                },
+
+                stopLocationSharing() {
+                    this.locationSharingEnabled = false;
+                    if (this.locationInterval) {
+                        clearInterval(this.locationInterval);
+                        this.locationInterval = null;
+                    }
+                    this.clearLocationOnServer();
+                },
+
+                async shareLocationToServer() {
+                    if (!this.userLocation) return;
+                    try {
+                        await fetch('/api/user-location', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            },
+                            credentials: 'same-origin',
+                            body: JSON.stringify({
+                                latitude: this.userLocation.lat,
+                                longitude: this.userLocation.lng,
+                            }),
+                        });
+                    } catch (error) {
+                        console.error('Error sharing location:', error);
+                    }
+                },
+
+                clearLocationOnServer() {
+                    // Use sendBeacon for reliability when page is closing
+                    const data = new FormData();
+                    data.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+                    data.append('_method', 'DELETE');
+                    navigator.sendBeacon('/api/user-location', data);
+                },
+
+                async loadActiveUsers() {
+                    try {
+                        const response = await fetch('/api/user-locations', {
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            },
+                            credentials: 'same-origin',
+                        });
+                        const users = await response.json();
+                        this.activeUsers = users;
+                        this.renderUserMarkers();
+                    } catch (error) {
+                        console.error('Error loading active users:', error);
+                    }
+                },
+
+                renderUserMarkers() {
+                    // Get current user IDs on the map
+                    const currentUserIds = new Set(Object.keys(this.userMarkers).map(id => parseInt(id)));
+                    const newUserIds = new Set(this.activeUsers.map(u => u.id));
+
+                    // Remove markers for users no longer active
+                    currentUserIds.forEach(id => {
+                        if (!newUserIds.has(id)) {
+                            this.map.removeLayer(this.userMarkers[id]);
+                            delete this.userMarkers[id];
+                        }
+                    });
+
+                    // Add or update markers for active users
+                    this.activeUsers.forEach(user => {
+                        if (this.userMarkers[user.id]) {
+                            // Update position
+                            this.userMarkers[user.id].setLatLng([user.latitude, user.longitude]);
+                        } else {
+                            // Create new marker with a different color
+                            const userIcon = L.divIcon({
+                                className: 'other-user-marker',
+                                html: `<div class="w-5 h-5 bg-orange-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center">
+                                    <span class="text-white text-xs font-bold">${user.name.charAt(0).toUpperCase()}</span>
+                                </div>`,
+                                iconSize: [20, 20],
+                                iconAnchor: [10, 10],
+                            });
+
+                            this.userMarkers[user.id] = L.marker([user.latitude, user.longitude], { icon: userIcon })
+                                .addTo(this.map)
+                                .bindPopup(`<strong>${user.name}</strong><br><span class="text-gray-500 text-sm">Active now</span>`);
+                        }
+                    });
+                },
+
+                hasDataChanged(newHouses, newFlyers) {
+                    // Quick check if data has changed to avoid unnecessary re-renders
+                    if (newHouses.length !== this.houses.length || newFlyers.length !== this.flyerLocations.length) {
+                        return true;
+                    }
+
+                    const housesChanged = newHouses.some((house, i) => {
+                        const old = this.houses[i];
+                        return !old ||
+                            house.id !== old.id ||
+                            house.flyer_left !== old.flyer_left ||
+                            house.talked_to_owners !== old.talked_to_owners ||
+                            house.address !== old.address ||
+                            house.notes !== old.notes;
+                    });
+
+                    const flyersChanged = newFlyers.some((flyer, i) => {
+                        const old = this.flyerLocations[i];
+                        return !old ||
+                            flyer.id !== old.id ||
+                            flyer.address !== old.address ||
+                            flyer.notes !== old.notes;
+                    });
+
+                    return housesChanged || flyersChanged;
                 },
 
                 getUserLocation() {
                     if ('geolocation' in navigator) {
                         navigator.geolocation.watchPosition(
                             (position) => {
+                                const isFirstLocation = !this.userLocation;
                                 this.userLocation = {
                                     lat: position.coords.latitude,
                                     lng: position.coords.longitude,
@@ -285,6 +482,12 @@
                                     // Center map on user location on first load
                                     this.map.setView([this.userLocation.lat, this.userLocation.lng], 16);
                                 }
+
+                                // Start sharing location with other users
+                                if (isFirstLocation) {
+                                    this.startLocationSharing();
+                                    this.loadActiveUsers();
+                                }
                             },
                             (error) => {
                                 console.error('Error getting location:', error);
@@ -306,8 +509,10 @@
                     }
                 },
 
-                async loadPins() {
+                async loadPins(isPolling = false) {
                     try {
+                        this.syncStatus = 'syncing';
+
                         const [housesRes, flyersRes] = await Promise.all([
                             fetch('/api/houses', {
                                 headers: {
@@ -325,12 +530,21 @@
                             }),
                         ]);
 
-                        this.houses = await housesRes.json();
-                        this.flyerLocations = await flyersRes.json();
+                        const newHouses = await housesRes.json();
+                        const newFlyers = await flyersRes.json();
 
-                        this.renderPins();
+                        // Only re-render if data has changed (avoids flickering during polling)
+                        if (!isPolling || this.hasDataChanged(newHouses, newFlyers)) {
+                            this.houses = newHouses;
+                            this.flyerLocations = newFlyers;
+                            this.renderPins();
+                        }
+
+                        this.lastSync = new Date();
+                        this.syncStatus = 'synced';
                     } catch (error) {
                         console.error('Error loading pins:', error);
+                        this.syncStatus = 'error';
                     }
                 },
 
