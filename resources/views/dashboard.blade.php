@@ -13,9 +13,16 @@
 
             <!-- Modal Content -->
             <div class="relative bg-white w-full sm:w-96 sm:rounded-lg rounded-t-2xl shadow-xl max-h-[80vh] overflow-auto">
-                <div class="p-4 border-b">
-                    <h3 class="text-lg font-semibold text-gray-900">Add Location</h3>
-                    <p class="text-sm text-gray-500" x-text="'Lat: ' + newPin.latitude.toFixed(6) + ', Lng: ' + newPin.longitude.toFixed(6)"></p>
+                <div class="p-4 border-b flex justify-between items-start">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Add Location</h3>
+                        <p class="text-sm text-gray-500" x-text="'Lat: ' + newPin.latitude.toFixed(6) + ', Lng: ' + newPin.longitude.toFixed(6)"></p>
+                    </div>
+                    <button type="button" @click="showAddModal = false" class="text-gray-400 hover:text-gray-600 p-1">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
                 </div>
 
                 <div class="p-4 space-y-4">
@@ -71,16 +78,11 @@
                     </div>
                 </div>
 
-                <div class="p-4 border-t flex gap-2">
-                    <button type="button"
-                            @click="showAddModal = false"
-                            class="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium">
-                        Cancel
-                    </button>
+                <div class="p-4 border-t">
                     <button type="button"
                             @click="savePin()"
                             :disabled="saving"
-                            class="flex-1 px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50">
+                            class="w-full px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50">
                         <span x-show="!saving">Save</span>
                         <span x-show="saving">Saving...</span>
                     </button>
@@ -98,9 +100,16 @@
 
             <!-- Modal Content -->
             <div class="relative bg-white w-full sm:w-96 sm:rounded-lg rounded-t-2xl shadow-xl max-h-[80vh] overflow-auto">
-                <div class="p-4 border-b">
-                    <h3 class="text-lg font-semibold text-gray-900" x-text="editPin.type === 'house' ? 'Edit House' : 'Edit Flyer Location'"></h3>
-                    <p class="text-sm text-gray-500" x-text="editPin.address || 'No address'"></p>
+                <div class="p-4 border-b flex justify-between items-start">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900" x-text="editPin.type === 'house' ? 'Edit House' : 'Edit Flyer Location'"></h3>
+                        <p class="text-sm text-gray-500" x-text="editPin.address || 'No address'"></p>
+                    </div>
+                    <button type="button" @click="showEditModal = false" class="text-gray-400 hover:text-gray-600 p-1">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
                 </div>
 
                 <div class="p-4 space-y-4">
@@ -141,11 +150,6 @@
                             :disabled="saving"
                             class="px-4 py-2 text-red-700 bg-red-100 rounded-lg hover:bg-red-200 font-medium disabled:opacity-50">
                         Delete
-                    </button>
-                    <button type="button"
-                            @click="showEditModal = false"
-                            class="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium">
-                        Cancel
                     </button>
                     <button type="button"
                             @click="updatePin()"
