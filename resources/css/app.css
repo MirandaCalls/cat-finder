@@ -15,3 +15,14 @@
     background: transparent;
     border: none;
 }
+
+/* Make markers semi-transparent on hover to see map underneath */
+.house-marker > div,
+.flyer-marker > div {
+    transition: opacity 0.15s ease;
+}
+
+.house-marker:hover > div,
+.flyer-marker:hover > div {
+    opacity: 0.3;
+}
